@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Kocaeli Kesif Rota Haritasi</title>
+<link rel="stylesheet" href="leaflet.css">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div id="app">
+
+<div id="sb">
+  <div id="hdr">
+    <div class="badge">Kocaeli 2. Idare Mahkemesi</div>
+    <h1>Kesif Gunü Rota Haritasi</h1>
+    <div class="dtag">30 Haziran 2026 - Sali</div>
+  </div>
+  <div id="stats">
+    <div class="stat"><div class="sv">31</div><div class="sl">Nokta</div></div>
+    <div class="stat"><div class="sv">266</div><div class="sl">km</div></div>
+    <div class="stat"><div class="sv">09:00</div><div class="sl">Cikis</div></div>
+    <div class="stat"><div class="sv">17:26</div><div class="sl">Donus</div></div>
+  </div>
+  <div id="tabs">
+    <button class="tab on" onclick="swTab('list',this)">Rota</button>
+    <button class="tab"    onclick="swTab('leg',this)">Aciklama</button>
+  </div>
+  <div id="list"></div>
+  <div id="leg">
+    <div class="lt">Semboller</div>
+    <div class="lr"><div class="ld" style="background:#1a2b45"></div><span style="font-size:11px">Baslangic / Donus (S/R)</span></div>
+    <div class="lr"><div class="ld" style="background:#2563eb"></div><span style="font-size:11px">1-10. durak (buyuk = 15dk bekleme)</span></div>
+    <div class="lr"><div class="ld" style="background:#0ea5e9"></div><span style="font-size:11px">21-32. durak (kucuk = grup ici)</span></div>
+    <div class="lr"><div style="width:28px;height:3px;background:#f59e0b;flex-shrink:0"></div><span style="font-size:11px">Rota cizgisi</span></div>
+    <div class="lr"><div style="width:28px;height:12px;background:#fef3c7;border:1px solid #fde68a;border-radius:3px;flex-shrink:0"></div><span style="font-size:11px">Sari = grup ici (bekleme yok)</span></div>
+    <div class="lr"><div style="width:28px;height:12px;background:#fff7ed;border:1px solid #f59e0b;border-radius:3px;flex-shrink:0"></div><span style="font-size:11px">Turuncu = kisitli (en sona alindi)</span></div>
+    <div class="lsep"></div>
+    <div class="ln">60 km/s hiz esasli hesaplama. Grup ici noktalara tek 15dk bekleme uygulanir. Yassibag 138/84 ve Dilovasi 126/1 kural geregi en sona alindi.</div>
+  </div>
+</div>
+
+<div style="position:relative;flex:1">
+  <button id="mobtog" onclick="document.getElementById('sb').classList.toggle('open')">Menu</button>
+  <div id="map"></div>
+  <div id="mc">
+    <button class="mb on" id="br" onclick="togRota()">Rota</button>
+    <button class="mb" onclick="fitAll()">Tumu</button>
+  </div>
+</div>
+
+</div>
+<script src="leaflet.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
