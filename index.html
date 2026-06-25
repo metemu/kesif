@@ -4,12 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Kocaeli Kesif Rota Haritasi</title>
-<link rel="stylesheet" href="leaflet.css">
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
 <div id="app">
-
 <div id="sb">
   <div id="hdr">
     <div class="badge">Kocaeli 2. Idare Mahkemesi</div>
@@ -24,34 +22,354 @@
   </div>
   <div id="tabs">
     <button class="tab on" onclick="swTab('list',this)">Rota</button>
-    <button class="tab"    onclick="swTab('leg',this)">Aciklama</button>
+    <button class="tab" onclick="swTab('leg',this)">Aciklama</button>
   </div>
   <div id="list"></div>
   <div id="leg">
     <div class="lt">Semboller</div>
     <div class="lr"><div class="ld" style="background:#1a2b45"></div><span style="font-size:11px">Baslangic / Donus (S/R)</span></div>
-    <div class="lr"><div class="ld" style="background:#2563eb"></div><span style="font-size:11px">1-10. durak (buyuk = 15dk bekleme)</span></div>
-    <div class="lr"><div class="ld" style="background:#0ea5e9"></div><span style="font-size:11px">21-32. durak (kucuk = grup ici)</span></div>
-    <div class="lr"><div style="width:28px;height:3px;background:#f59e0b;flex-shrink:0"></div><span style="font-size:11px">Rota cizgisi</span></div>
-    <div class="lr"><div style="width:28px;height:12px;background:#fef3c7;border:1px solid #fde68a;border-radius:3px;flex-shrink:0"></div><span style="font-size:11px">Sari = grup ici (bekleme yok)</span></div>
-    <div class="lr"><div style="width:28px;height:12px;background:#fff7ed;border:1px solid #f59e0b;border-radius:3px;flex-shrink:0"></div><span style="font-size:11px">Turuncu = kisitli (en sona alindi)</span></div>
+    <div class="lr"><div class="ld" style="background:#2563eb"></div><span style="font-size:11px">1-10. durak (buyuk = 15dk)</span></div>
+    <div class="lr"><div class="ld" style="background:#0ea5e9"></div><span style="font-size:11px">11-32. durak</span></div>
+    <div class="lr"><div style="width:28px;height:3px;background:#f59e0b;flex-shrink:0;border-radius:2px"></div><span style="font-size:11px">Rota</span></div>
+    <div class="lr"><div style="width:28px;height:12px;background:#fef3c7;border:1px solid #fde68a;border-radius:3px;flex-shrink:0"></div><span style="font-size:11px">Sari: grup ici</span></div>
+    <div class="lr"><div style="width:28px;height:12px;background:#fff7ed;border:1px solid #f59e0b;border-radius:3px;flex-shrink:0"></div><span style="font-size:11px">Turuncu: kisitli</span></div>
     <div class="lsep"></div>
-    <div class="ln">60 km/s hiz esasli hesaplama. Grup ici noktalara tek 15dk bekleme uygulanir. Yassibag 138/84 ve Dilovasi 126/1 kural geregi en sona alindi.</div>
+    <div class="ln">Haritaya tiklayin veya listeden secin. Google Maps butonu ile gercek navigasyona gecin.</div>
   </div>
 </div>
-
-<div style="position:relative;flex:1">
+<div style="position:relative;flex:1;overflow:hidden;background:#b8d4e8">
   <button id="mobtog" onclick="document.getElementById('sb').classList.toggle('open')">Menu</button>
-  <div id="map"></div>
+  <canvas id="cv" style="display:block;width:100%;height:100%;cursor:grab"></canvas>
+  <div id="pop" style="position:absolute;background:#fff;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.2);width:275px;z-index:50;display:none">
+    <button onclick="hidePop()" style="position:absolute;top:7px;right:9px;background:none;border:none;font-size:16px;cursor:pointer;color:#94a3b8">x</button>
+    <div id="pop-inner"></div>
+  </div>
   <div id="mc">
     <button class="mb on" id="br" onclick="togRota()">Rota</button>
     <button class="mb" onclick="fitAll()">Tumu</button>
+    <button class="mb" onclick="doZoom(1.3)">+</button>
+    <button class="mb" onclick="doZoom(0.75)">-</button>
   </div>
 </div>
-
 </div>
-<script src="leaflet.js"></script>
 <script src="data.js"></script>
-<script src="app.js"></script>
+<script>
+// ── Harita koordinat aralığı ──────────────────────────────────
+var KORFEZ = [[29.35, 40.76], [29.45, 40.76], [29.55, 40.73], [29.65, 40.72], [29.75, 40.73], [29.85, 40.76], [29.95, 40.78], [30.05, 40.76], [30.1, 40.72], [30.05, 40.68], [29.95, 40.65], [29.85, 40.62], [29.75, 40.6], [29.65, 40.58], [29.55, 40.58], [29.45, 40.6], [29.38, 40.64], [29.35, 40.7], [29.35, 40.76]];
+var SINIR  = [[29.3, 40.98], [29.5, 40.98], [29.7, 40.95], [29.9, 40.92], [30.1, 40.88], [30.15, 40.8], [30.12, 40.68], [30.08, 40.55], [29.95, 40.5], [29.75, 40.5], [29.55, 40.52], [29.4, 40.55], [29.3, 40.6], [29.28, 40.72], [29.3, 40.85], [29.3, 40.98]];
+var ILCELER= [{"name": "Izmit", "lon": 29.92, "lat": 40.77}, {"name": "Gebze", "lon": 29.43, "lat": 40.8}, {"name": "Golcuk", "lon": 29.83, "lat": 40.7}, {"name": "Kartepe", "lon": 30.01, "lat": 40.69}, {"name": "Baskale", "lon": 29.97, "lat": 40.72}, {"name": "Cayirova", "lon": 29.38, "lat": 40.84}, {"name": "Darica", "lon": 29.38, "lat": 40.77}, {"name": "Karamursel", "lon": 29.61, "lat": 40.69}, {"name": "Dilova", "lon": 29.55, "lat": 40.79}, {"name": "Korfez", "lon": 29.76, "lat": 40.78}];
+var CONSTRAINED = {31:true, 32:true};
+
+// ── Mercator projeksiyon ──────────────────────────────────────
+function mX(lon){ return (lon + 180) / 360; }
+function mY(lat){
+  var s = Math.sin(lat * Math.PI / 180);
+  return (1 - Math.log((1+s)/(1-s)) / (2*Math.PI)) / 2;
+}
+
+var cv  = document.getElementById("cv");
+var ctx = cv.getContext("2d");
+var wrap = cv.parentElement;
+var V = {cx:0, cy:0, sc:1};
+
+function resize(){
+  cv.width  = wrap.clientWidth;
+  cv.height = wrap.clientHeight;
+  draw();
+}
+window.addEventListener("resize", resize);
+
+// Başlangıç view
+var allX = PTS.map(function(p){return mX(p.lon);});
+var allY = PTS.map(function(p){return mY(p.lat);});
+var minX = Math.min.apply(null,allX), maxX = Math.max.apply(null,allX);
+var minY = Math.min.apply(null,allY), maxY = Math.max.apply(null,allY);
+
+function fitAll(){
+  var W=cv.width, H=cv.height, pad=0.08;
+  var rx=(maxX-minX)*(1+pad*2), ry=(maxY-minY)*(1+pad*2);
+  V.sc = Math.min(W/rx, H/ry);
+  V.cx = (minX+maxX)/2;
+  V.cy = (minY+maxY)/2;
+  hidePop(); draw();
+}
+
+function toXY(lon, lat){
+  var W=cv.width, H=cv.height;
+  return [W/2 + (mX(lon)-V.cx)*V.sc, H/2 + (mY(lat)-V.cy)*V.sc];
+}
+
+// ── Vektör harita çizimi ──────────────────────────────────────
+function drawBasemap(){
+  var W=cv.width, H=cv.height;
+
+  // Deniz/körfez arkaplanı
+  ctx.fillStyle = "#b8d4e8";
+  ctx.fillRect(0,0,W,H);
+
+  // Kara alanı (sınır poligonu)
+  ctx.beginPath();
+  SINIR.forEach(function(c,i){
+    var xy=toXY(c[0],c[1]);
+    i===0 ? ctx.moveTo(xy[0],xy[1]) : ctx.lineTo(xy[0],xy[1]);
+  });
+  ctx.closePath();
+  ctx.fillStyle = "#e8ede4";
+  ctx.fill();
+  ctx.strokeStyle = "#b0bfae";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // İzmit Körfezi (su)
+  ctx.beginPath();
+  KORFEZ.forEach(function(c,i){
+    var xy=toXY(c[0],c[1]);
+    i===0 ? ctx.moveTo(xy[0],xy[1]) : ctx.lineTo(xy[0],xy[1]);
+  });
+  ctx.closePath();
+  ctx.fillStyle = "#b8d4e8";
+  ctx.fill();
+  ctx.strokeStyle = "#8ab5cc";
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
+
+  // İlçe etiketleri (hafif)
+  ctx.fillStyle = "rgba(80,100,80,0.5)";
+  ctx.font = "bold 11px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ILCELER.forEach(function(il){
+    var xy = toXY(il.lon, il.lat);
+    if(xy[0]>0 && xy[0]<W && xy[1]>0 && xy[1]<H){
+      ctx.fillText(il.name, xy[0], xy[1]);
+    }
+  });
+}
+
+// ── Tam çizim ─────────────────────────────────────────────────
+var showRota = true;
+
+function draw(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  drawBasemap();
+
+  if(showRota){
+    // Rota beyaz halo
+    ctx.beginPath();
+    PTS.forEach(function(p,i){
+      var xy=toXY(p.lon,p.lat);
+      i===0 ? ctx.moveTo(xy[0],xy[1]) : ctx.lineTo(xy[0],xy[1]);
+    });
+    ctx.strokeStyle="rgba(255,255,255,0.85)"; ctx.lineWidth=7;
+    ctx.lineJoin="round"; ctx.lineCap="round"; ctx.setLineDash([]); ctx.stroke();
+
+    // Rota çizgisi
+    ctx.beginPath();
+    PTS.forEach(function(p,i){
+      var xy=toXY(p.lon,p.lat);
+      i===0 ? ctx.moveTo(xy[0],xy[1]) : ctx.lineTo(xy[0],xy[1]);
+    });
+    ctx.strokeStyle="#f59e0b"; ctx.lineWidth=3;
+    ctx.setLineDash([8,5]); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Ok yönleri
+    for(var i=0; i<PTS.length-1; i+=4){
+      var xy0=toXY(PTS[i].lon,PTS[i].lat);
+      var xy1=toXY(PTS[i+1].lon,PTS[i+1].lat);
+      var dx=xy1[0]-xy0[0], dy=xy1[1]-xy0[1];
+      var d=Math.sqrt(dx*dx+dy*dy);
+      if(d<5) continue;
+      var mx=(xy0[0]+xy1[0])/2, my=(xy0[1]+xy1[1])/2;
+      var angle=Math.atan2(dy,dx);
+      ctx.save();
+      ctx.translate(mx,my);
+      ctx.rotate(angle);
+      ctx.beginPath();
+      ctx.moveTo(-6,-4); ctx.lineTo(0,0); ctx.lineTo(-6,4);
+      ctx.strokeStyle="#d97706"; ctx.lineWidth=1.5;
+      ctx.lineJoin="round"; ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  // Noktalar
+  PTS.forEach(function(p){
+    var xy=toXY(p.lon,p.lat);
+    var special=p.is_start||p.is_return;
+    var isCon=CONSTRAINED[p.step]||false;
+    var r=special?14:(p.stay_min===15?11:7);
+    // Gölge
+    ctx.beginPath(); ctx.arc(xy[0],xy[1]+2,r+2,0,Math.PI*2);
+    ctx.fillStyle="rgba(0,0,0,0.12)"; ctx.fill();
+    // Halo
+    ctx.beginPath(); ctx.arc(xy[0],xy[1],r+3,0,Math.PI*2);
+    ctx.fillStyle="#fff"; ctx.fill();
+    // Renk
+    ctx.beginPath(); ctx.arc(xy[0],xy[1],r,0,Math.PI*2);
+    ctx.fillStyle=p.color; ctx.fill();
+    // Kısıtlı halka
+    if(isCon){
+      ctx.beginPath(); ctx.arc(xy[0],xy[1],r+4,0,Math.PI*2);
+      ctx.strokeStyle="#f59e0b"; ctx.lineWidth=2.5; ctx.stroke();
+    }
+    // Etiket
+    var lbl=p.is_start?"S":(p.is_return?"R":String(p.step));
+    ctx.fillStyle="#fff";
+    ctx.font="bold "+(special?12:r>=10?9:7)+"px sans-serif";
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText(lbl,xy[0],xy[1]);
+  });
+}
+
+// ── Pan/Zoom ──────────────────────────────────────────────────
+var drag=false, ds={x:0,y:0}, vs={cx:0,cy:0};
+
+cv.addEventListener("mousedown",function(e){
+  drag=true; ds={x:e.clientX,y:e.clientY}; vs={cx:V.cx,cy:V.cy};
+  cv.style.cursor="grabbing";
+});
+window.addEventListener("mousemove",function(e){
+  if(!drag) return;
+  V.cx=vs.cx-(e.clientX-ds.x)/V.sc;
+  V.cy=vs.cy-(e.clientY-ds.y)/V.sc;
+  draw();
+});
+window.addEventListener("mouseup",function(){ drag=false; cv.style.cursor="grab"; });
+
+cv.addEventListener("wheel",function(e){
+  e.preventDefault();
+  var f=e.deltaY<0?1.15:0.87;
+  var rect=cv.getBoundingClientRect();
+  var mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  var cx0=V.cx+(mx-cv.width/2)/V.sc;
+  var cy0=V.cy+(my-cv.height/2)/V.sc;
+  V.sc*=f;
+  V.cx=cx0-(mx-cv.width/2)/V.sc;
+  V.cy=cy0-(my-cv.height/2)/V.sc;
+  draw();
+},{passive:false});
+
+// Touch
+var tc={};
+cv.addEventListener("touchstart",function(e){
+  e.preventDefault();
+  if(e.touches.length===1){ drag=true; ds={x:e.touches[0].clientX,y:e.touches[0].clientY}; vs={cx:V.cx,cy:V.cy}; }
+  if(e.touches.length===2){ drag=false; tc.d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); tc.s=V.sc; }
+},{passive:false});
+cv.addEventListener("touchmove",function(e){
+  e.preventDefault();
+  if(e.touches.length===1&&drag){ V.cx=vs.cx-(e.touches[0].clientX-ds.x)/V.sc; V.cy=vs.cy-(e.touches[0].clientY-ds.y)/V.sc; draw(); }
+  if(e.touches.length===2){ var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); V.sc=tc.s*(d/tc.d); draw(); }
+},{passive:false});
+cv.addEventListener("touchend",function(){ drag=false; });
+
+function doZoom(f){ V.sc*=f; draw(); }
+
+// ── Tıklama → Popup ───────────────────────────────────────────
+cv.addEventListener("click",function(e){
+  if(Math.abs(e.clientX-ds.x)>5||Math.abs(e.clientY-ds.y)>5) return;
+  var rect=cv.getBoundingClientRect();
+  var mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  var best=null, bestD=999;
+  PTS.forEach(function(p,i){
+    var xy=toXY(p.lon,p.lat);
+    var d=Math.hypot(mx-xy[0],my-xy[1]);
+    var hit=p.is_start||p.is_return?18:p.stay_min===15?15:11;
+    if(d<hit&&d<bestD){ bestD=d; best=i; }
+  });
+  if(best!==null) showPop(best,e.clientX-rect.left,e.clientY-rect.top);
+  else hidePop();
+});
+
+// ── Popup ─────────────────────────────────────────────────────
+var activeItem=null;
+
+function showPop(i,px,py){
+  var p=PTS[i];
+  var isCon=CONSTRAINED[p.step]||false;
+  var loc=p.is_start||p.is_return?"Kocaeli Idare Mahkemesi":[p.ilce,p.mahalle].filter(Boolean).join(" / ");
+  var badge=p.is_start?"S":(p.is_return?"R":p.step);
+  var sub=p.is_start?"BASLANGIC":(p.is_return?"DONUS":p.step+". Durak"+(p.stay_min===0?" (Grup ici)":"")+(isCon?" [Kisitli]":""));
+  var rows="";
+  if(!p.is_start&&!p.is_return){
+    if(p.esas_no) rows+=pr("Esas No",p.esas_no);
+    if(p.ilce)    rows+=pr("Ilce",p.ilce);
+    if(p.mahalle) rows+=pr("Mahalle",p.mahalle);
+    if(p.ada&&p.ada!=""&&p.ada!="nan") rows+=pr("Ada/Pars.",p.ada+(p.parsel&&p.parsel!="-"?" / "+p.parsel:""));
+    rows+=pr("Varis",p.varis);
+    if(p.cikis) rows+=pr("Cikis",p.cikis);
+    rows+=pr("Bekleme",p.stay_min===0?"Grup ici":p.stay_min+" dk");
+    if(p.yol_km) rows+=pr("Mesafe",p.yol_km+" km");
+  } else {
+    rows+=pr("Adres","Dogan Baris Cd. No:2");
+    rows+=pr(p.is_start?"Cikis":"Varis",p.is_start?"09:00":"17:26");
+  }
+  var btn=(p.gmaps&&p.gmaps.length>10)
+    ? '<a class="gb" href="'+p.gmaps+'" target="_blank">Google Maps</a>'
+    : '<a class="gb off">Harita linki yok</a>';
+
+  document.getElementById("pop-inner").innerHTML=
+    '<div class="ph" style="background:'+p.color+'18;border-bottom:2px solid '+p.color+'44">'+
+    '<div class="pbadge" style="background:'+p.color+'">'+badge+'</div>'+
+    '<div><div class="ptitle">'+xe(loc)+'</div><div class="psub">'+sub+'</div></div></div>'+
+    '<div class="pb">'+rows+'</div><div class="pf">'+btn+'</div>';
+
+  var pop=document.getElementById("pop");
+  pop.style.display="block";
+  var W=cv.width, pw=275, ph=pop.offsetHeight||200;
+  var left=px+14; if(left+pw>W-8) left=px-pw-14;
+  var top=py-ph/2; if(top<8) top=8; if(top+ph>cv.height-8) top=cv.height-ph-8;
+  pop.style.left=left+"px"; pop.style.top=top+"px";
+
+  if(activeItem) activeItem.classList.remove("on");
+  var li=document.getElementById("ri"+i);
+  if(li){ li.classList.add("on"); li.scrollIntoView({block:"nearest",behavior:"smooth"}); activeItem=li; }
+}
+
+function hidePop(){ document.getElementById("pop").style.display="none"; }
+function pr(k,v){ return'<div class="pr"><span class="pk">'+k+'</span><span class="pv">'+xe(String(v))+'</span></div>'; }
+function xe(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+// ── Sidebar listesi ───────────────────────────────────────────
+var listEl=document.getElementById("list");
+PTS.forEach(function(p,i){
+  var isCon=CONSTRAINED[p.step]||false;
+  var loc=p.is_start?"Kocaeli Idare Mahkemesi":(p.is_return?"Kocaeli Idare Mahkemesi (Donus)":[p.ilce,p.mahalle].filter(Boolean).join(" / "));
+  var ap=(!p.is_start&&!p.is_return&&p.ada&&p.ada!=""&&p.ada!="nan")?"Ada:"+p.ada+(p.parsel&&p.parsel!="-"&&p.parsel!=""?" Par:"+p.parsel:""):"";
+  var isGrp=(!p.is_start&&!p.is_return&&p.stay_min===0);
+  var lbl=p.is_start?"S":(p.is_return?"R":p.step);
+  var d=document.createElement("div");
+  d.className="ri"+(isGrp?" grp":"")+(isCon?" con":""); d.id="ri"+i;
+  var meta="";
+  if(p.esas_no) meta+='<span class="chip">'+p.esas_no+'</span>';
+  if(ap) meta+='<span class="chip">'+ap+'</span>';
+  var b2=isCon?'<span class="conb">kisitli</span>':(isGrp?'<span class="grpb">grup ici</span>':(p.yol_km?'<span class="idk">+'+p.yol_km+'km</span>':""));
+  d.innerHTML=
+    '<div class="sc"><div class="sb2" style="background:'+p.color+'">'+lbl+'</div><div class="sl2"></div></div>'+
+    '<div class="ib"><div class="it"><span class="itm">'+p.varis+(p.cikis?" > "+p.cikis:"")+'</span>'+b2+'</div>'+
+    '<div class="il">'+xe(loc)+'</div><div class="im">'+meta+'</div></div>';
+  d.addEventListener("click",function(){
+    V.cx=mX(p.lon); V.cy=mY(p.lat);
+    if(V.sc<600000) V.sc=600000;
+    draw();
+    setTimeout(function(){ showPop(i,cv.width/2,cv.height/2); },80);
+  });
+  listEl.appendChild(d);
+});
+
+// ── Toggle/Tab ────────────────────────────────────────────────
+function togRota(){ showRota=!showRota; document.getElementById("br").classList.toggle("on",showRota); draw(); }
+function swTab(t,el){
+  document.querySelectorAll(".tab").forEach(function(x){x.classList.remove("on");});
+  el.classList.add("on");
+  document.getElementById("list").style.display=t==="list"?"block":"none";
+  document.getElementById("leg").style.display=t==="leg"?"block":"none";
+}
+
+// ── Başlat ────────────────────────────────────────────────────
+resize();
+fitAll();
+</script>
 </body>
 </html>
