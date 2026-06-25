@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Kocaeli Kesif Rota Haritasi</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;font-family:"Segoe UI",system-ui,sans-serif;overflow:hidden}
+#app{display:flex;height:100vh}
+#sb{width:340px;min-width:340px;display:flex;flex-direction:column;background:#fff;border-right:1px solid #e2e8f0;z-index:10;overflow:hidden}
+#hdr{background:linear-gradient(135deg,#1a2b45,#1e3a5f);padding:14px 16px 12px;flex-shrink:0}
+.badge{display:inline-block;background:rgba(255,255,255,.15);border-radius:20px;padding:2px 10px;margin-bottom:7px;font-size:10px;color:rgba(255,255,255,.85)}
+#hdr h1{color:#fff;font-size:14px;font-weight:700;line-height:1.4}
+.dtag{display:inline-block;margin-top:5px;background:#f59e0b;color:#111;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px}
+#stats{display:grid;grid-template-columns:repeat(4,1fr);flex-shrink:0;border-bottom:1px solid #e2e8f0}
+.stat{padding:8px 4px;text-align:center;border-right:1px solid #e2e8f0}
+.stat:last-child{border-right:none}
+.sv{font-size:15px;font-weight:700;color:#2563eb}
+.sl{font-size:8px;color:#64748b;text-transform:uppercase;letter-spacing:.3px;margin-top:1px}
+#tabs{display:flex;flex-shrink:0;border-bottom:1px solid #e2e8f0}
+.tab{flex:1;padding:8px 4px;font-size:11px;font-weight:600;text-align:center;cursor:pointer;color:#64748b;background:none;border:none;border-bottom:2px solid transparent}
+.tab.on{color:#2563eb;border-bottom-color:#2563eb}
+#list{flex:1;overflow-y:auto}
+#list::-webkit-scrollbar{width:4px}
+#list::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:2px}
+.ri{display:flex;border-bottom:1px solid #e2e8f0;cursor:pointer}
+.ri:hover{background:#f1f5f9}
+.ri.on{background:#eff6ff}
+.ri.grp{background:#fefce8}
+.ri.constrained{background:#fff7ed}
+.sc{width:40px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding:9px 4px 0}
+.sb2{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff}
+.sl2{width:2px;background:#e2e8f0;flex:1;margin-top:4px;min-height:12px}
+.ri:last-child .sl2{display:none}
+.ib{flex:1;padding:8px 10px 8px 3px}
+.it{display:flex;align-items:center;justify-content:space-between;gap:4px}
+.itm{font-size:11px;font-weight:700;color:#1a2b45}
+.idk{font-size:9px;color:#64748b;background:#f1f5f9;padding:1px 5px;border-radius:8px}
+.grpb{font-size:9px;color:#92400e;background:#fef3c7;padding:1px 5px;border-radius:8px;font-weight:600}
+.conb{font-size:9px;color:#b45309;background:#fef3c7;padding:1px 5px;border-radius:8px;font-weight:600;border:1px solid #f59e0b}
+.il{font-size:11px;font-weight:600;color:#1e293b;margin-top:2px;line-height:1.3}
+.im{font-size:9px;color:#64748b;margin-top:2px;display:flex;flex-wrap:wrap;gap:3px}
+.chip{background:#f1f5f9;border-radius:3px;padding:1px 4px;font-size:8.5px;font-weight:600;color:#64748b;text-transform:uppercase}
+#leg{flex:1;overflow-y:auto;padding:14px;display:none}
+.lt{font-size:11px;font-weight:700;color:#1a2b45;margin-bottom:8px;text-transform:uppercase}
+.lr{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.ld{width:15px;height:15px;border-radius:50%;flex-shrink:0;border:2px solid rgba(0,0,0,.12)}
+.lsep{height:1px;background:#e2e8f0;margin:10px 0}
+.ln{font-size:11px;color:#64748b;line-height:1.5}
+#mapwrap{flex:1;position:relative;overflow:hidden;background:#dde8f0;cursor:grab}
+#mapwrap:active{cursor:grabbing}
+#cv{display:block;width:100%;height:100%}
+#pop{position:absolute;background:#fff;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.2);width:275px;z-index:50;display:none}
+.ph{padding:9px 12px 7px;display:flex;align-items:center;gap:8px}
+.pbadge{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0}
+.ptitle{font-size:12px;font-weight:700;color:#1e293b;line-height:1.3}
+.psub{font-size:10px;color:#64748b;margin-top:1px}
+.pb{padding:0 12px 10px}
+.pr{display:flex;gap:6px;padding:4px 0;border-top:1px solid #e2e8f0}
+.pr:first-child{border-top:none}
+.pk{font-size:9.5px;color:#64748b;text-transform:uppercase;width:68px;flex-shrink:0;padding-top:1px}
+.pv{font-size:11px;font-weight:600;color:#1e293b}
+.pf{padding:7px 12px;background:#f8fafc;border-top:1px solid #e2e8f0;border-radius:0 0 10px 10px}
+.gb{display:flex;align-items:center;justify-content:center;background:#2563eb;color:#fff;border:none;border-radius:6px;padding:7px 10px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;width:100%}
+.gb:hover{background:#1d4ed8}
+.gb.off{background:#cbd5e1;cursor:default;pointer-events:none}
+.pcls{position:absolute;top:7px;right:9px;background:none;border:none;font-size:16px;cursor:pointer;color:#94a3b8;line-height:1}
+#mc{position:absolute;top:10px;right:10px;z-index:30;display:flex;flex-direction:column;gap:5px}
+.mb{background:#fff;border:1px solid #e2e8f0;border-radius:7px;padding:7px 12px;font-size:11px;font-weight:600;color:#1e293b;cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,.1)}
+.mb:hover{background:#f1f5f9}
+.mb.on{background:#2563eb;color:#fff;border-color:#2563eb}
+#mobtog{display:none;position:absolute;top:10px;left:10px;z-index:100;background:#1a2b45;color:#fff;border:none;border-radius:7px;padding:7px 11px;font-size:12px;font-weight:600;cursor:pointer}
+@media(max-width:660px){
+  #sb{position:absolute;top:0;left:0;height:100%;transform:translateX(-100%);transition:transform .3s;z-index:100}
+  #sb.open{transform:translateX(0)}
+  #mobtog{display:flex}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="sb">
+  <div id="hdr">
+    <div class="badge">Kocaeli 2. Idare Mahkemesi</div>
+    <h1>Kesif Gunü Rota Haritasi</h1>
+    <div class="dtag">30 Haziran 2026 - Sali</div>
+  </div>
+  <div id="stats">
+    <div class="stat"><div class="sv">31</div><div class="sl">Nokta</div></div>
+    <div class="stat"><div class="sv">266</div><div class="sl">km</div></div>
+    <div class="stat"><div class="sv">09:00</div><div class="sl">Cikis</div></div>
+    <div class="stat"><div class="sv">17:26</div><div class="sl">Donus</div></div>
+  </div>
+  <div id="tabs">
+    <button class="tab on" onclick="swTab('list',this)">Rota</button>
+    <button class="tab" onclick="swTab('leg',this)">Aciklama</button>
+  </div>
+  <div id="list"></div>
+  <div id="leg">
+    <div class="lt">Semboller</div>
+    <div class="lr"><div class="ld" style="background:#1a2b45"></div><span style="font-size:11px">Baslangic / Donus</span></div>
+    <div class="lr"><div class="ld" style="background:#2563eb"></div><span style="font-size:11px">1-10. durak</span></div>
+    <div class="lr"><div class="ld" style="background:#0ea5e9"></div><span style="font-size:11px">21-32. durak</span></div>
+    <div class="lr"><div style="width:28px;height:3px;background:#f59e0b;flex-shrink:0"></div><span style="font-size:11px">Rota cizgisi</span></div>
+    <div class="lr"><div style="width:28px;height:12px;background:#fef3c7;border:1px solid #fde68a;border-radius:3px;flex-shrink:0"></div><span style="font-size:11px">Sari = grup ici nokta</span></div>
+    <div class="lr"><div style="width:28px;height:12px;background:#fff7ed;border:1px solid #f59e0b;border-radius:3px;flex-shrink:0"></div><span style="font-size:11px">Turuncu = kisitli (sona alinan)</span></div>
+    <div class="lsep"></div>
+    <div class="ln">60 km/s hiz. Grup ici noktalara tek 15dk bekleme. Yassibag 138/84 ve Dilovasi 126/1 kural geregi en sona alindi.</div>
+  </div>
+</div>
+<div id="mapwrap">
+  <button id="mobtog" onclick="document.getElementById('sb').classList.toggle('open')">Menu</button>
+  <canvas id="cv"></canvas>
+  <div id="pop">
+    <button class="pcls" onclick="hidePop()">x</button>
+    <div id="pop-inner"></div>
+  </div>
+  <div id="mc">
+    <button class="mb on" id="br" onclick="togRota()">Rota</button>
+    <button class="mb" onclick="fitAll()">Tumu</button>
+    <button class="mb" onclick="doZoom(1.3)">+</button>
+    <button class="mb" onclick="doZoom(0.75)">-</button>
+  </div>
+</div>
+</div>
+<script>
+var PTS = [{"step": 0, "is_start": true, "is_return": false, "color": "#1a2b45", "lat": 40.765524, "lon": 29.8748785, "varis": "09:00", "cikis": "", "stay_min": 0, "yol_km": "", "esas_no": "", "ilce": "İzmit", "mahalle": "", "ada": "", "parsel": "", "gmaps": "https://www.google.com/maps/place/Kocaeli+İdare+Mahkemesi/@40.765524,29.8748785,17z"}, {"step": 1, "is_start": false, "is_return": false, "color": "#2563eb", "lat": 40.7868, "lon": 29.8828, "varis": "09:02", "cikis": "09:17", "stay_min": 15, "yol_km": "2.5", "esas_no": "2026/288", "ilce": "İzmit", "mahalle": "Akpınar", "ada": "6017", "parsel": "14", "gmaps": "https://www.google.com/maps/place/40°47'12.5%22N+29°52'58.1%22E/@40.786804,29.8802251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.7868!4d29.8828?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 2, "is_start": false, "is_return": false, "color": "#2465ea", "lat": 40.6929, "lon": 29.8283, "varis": "09:28", "cikis": "09:43", "stay_min": 15, "yol_km": "11.4", "esas_no": "2025/1533", "ilce": "Gölcük", "mahalle": "Şirinköy", "ada": "466", "parsel": "3", "gmaps": "https://www.google.com/maps/place/40.6929,29.8283/@40.6929,29.8283,17z"}, {"step": 3, "is_start": false, "is_return": false, "color": "#2367ea", "lat": 40.7021, "lon": 29.6761, "varis": "09:56", "cikis": "09:56", "stay_min": 0, "yol_km": "12.9", "esas_no": "2026/689", "ilce": "Karamürsel", "mahalle": "Ereğli", "ada": "290", "parsel": "18", "gmaps": "https://www.google.com/maps/place/40°42'07.6%22N+29°40'34.0%22E/@40.702104,29.6735251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.7021!4d29.6761?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 4, "is_start": false, "is_return": false, "color": "#2269ea", "lat": 40.7024, "lon": 29.676, "varis": "09:56", "cikis": "09:56", "stay_min": 0, "yol_km": "0.0", "esas_no": "2026/689", "ilce": "Karamürsel", "mahalle": "Ereğli", "ada": "290", "parsel": "18", "gmaps": "https://www.google.com/maps/place/40°42'08.6%22N+29°40'33.6%22E/@40.702404,29.6734251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.7024!4d29.676?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 5, "is_start": false, "is_return": false, "color": "#226bea", "lat": 40.7024, "lon": 29.6724, "varis": "09:57", "cikis": "09:57", "stay_min": 0, "yol_km": "0.3", "esas_no": "2026/691", "ilce": "Karamürsel", "mahalle": "Ereğli", "ada": "281", "parsel": "11", "gmaps": "https://www.google.com/maps/place/40°42'08.6%22N+29°40'20.6%22E/@40.702404,29.6698251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.7024!4d29.6724?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 6, "is_start": false, "is_return": false, "color": "#216dea", "lat": 40.7026, "lon": 29.6673, "varis": "09:57", "cikis": "09:57", "stay_min": 0, "yol_km": "0.4", "esas_no": "2026/691", "ilce": "Karamürsel", "mahalle": "Ereğli", "ada": "281", "parsel": "11", "gmaps": "https://www.google.com/maps/place/40°42'09.4%22N+29°40'02.3%22E/@40.702604,29.6647251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.7026!4d29.6673?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 7, "is_start": false, "is_return": false, "color": "#206fea", "lat": 40.7037, "lon": 29.666, "varis": "09:57", "cikis": "10:12", "stay_min": 15, "yol_km": "0.2", "esas_no": "2026/691", "ilce": "Karamürsel", "mahalle": "Ereğli", "ada": "281", "parsel": "11", "gmaps": "https://www.google.com/maps/place/40°42'13.3%22N+29°39'57.6%22E/@40.702604,29.6647251,17z/data=!4m4!3m3!8m2!3d40.7037!4d29.666?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 8, "is_start": false, "is_return": false, "color": "#1f71ea", "lat": 40.5405, "lon": 29.5389, "varis": "10:33", "cikis": "10:33", "stay_min": 0, "yol_km": "21.1", "esas_no": "2026/693", "ilce": "Karamürsel", "mahalle": "Kızderbent", "ada": "319", "parsel": "2", "gmaps": "https://www.google.com/maps/place/40°32'25.8%22N+29°32'20.0%22E/@40.540504,29.5363251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.5405!4d29.5389?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 9, "is_start": false, "is_return": false, "color": "#1f73ea", "lat": 40.5429, "lon": 29.5358, "varis": "10:34", "cikis": "10:34", "stay_min": 0, "yol_km": "0.4", "esas_no": "2026/693", "ilce": "Karamürsel", "mahalle": "Kızderbent", "ada": "315", "parsel": "12", "gmaps": "https://www.google.com/maps/place/40°32'34.4%22N+29°32'08.9%22E/@40.5403306,29.5295311,14.55z/data=!4m4!3m3!8m2!3d40.5429!4d29.5358?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 10, "is_start": false, "is_return": false, "color": "#1e75ea", "lat": 40.5431, "lon": 29.5331, "varis": "10:34", "cikis": "10:49", "stay_min": 15, "yol_km": "0.2", "esas_no": "2026/693", "ilce": "Karamürsel", "mahalle": "Kızderbent", "ada": "317", "parsel": "3", "gmaps": "https://www.google.com/maps/place/40°32'35.2%22N+29°31'59.2%22E/@40.5335437,29.4016215,11.83z/data=!4m4!3m3!8m2!3d40.5431!4d29.5331?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 11, "is_start": false, "is_return": false, "color": "#1d77ea", "lat": 40.6858, "lon": 29.559, "varis": "11:05", "cikis": "11:20", "stay_min": 15, "yol_km": "16.0", "esas_no": "2025/1776", "ilce": "Karamürsel", "mahalle": "Dereköy", "ada": "125", "parsel": "2", "gmaps": "https://www.google.com/maps/place/40°41'08.9%22N+29°33'32.4%22E/@40.685804,29.5564251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.6858!4d29.559?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 12, "is_start": false, "is_return": false, "color": "#1d79ea", "lat": 40.8166, "lon": 29.4782, "varis": "11:36", "cikis": "11:36", "stay_min": 0, "yol_km": "16.1", "esas_no": "2026/483", "ilce": "Gebze", "mahalle": "Güzeller", "ada": "75", "parsel": "91", "gmaps": "https://www.google.com/maps/place/40°48'59.8%22N+29°28'41.5%22E/@40.817304,29.4751251,17z/data=!4m4!3m3!8m2!3d40.8166!4d29.4782?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 13, "is_start": false, "is_return": false, "color": "#1c7bea", "lat": 40.8173, "lon": 29.4777, "varis": "11:36", "cikis": "11:36", "stay_min": 0, "yol_km": "0.1", "esas_no": "2026/483", "ilce": "Gebze", "mahalle": "Güzeller", "ada": "75", "parsel": "91", "gmaps": "https://www.google.com/maps/place/40°49'02.3%22N+29°28'39.7%22E/@40.817304,29.4751251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.8173!4d29.4777?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 14, "is_start": false, "is_return": false, "color": "#1b7dea", "lat": 40.8204, "lon": 29.4756, "varis": "11:36", "cikis": "11:51", "stay_min": 15, "yol_km": "0.4", "esas_no": "2026/483", "ilce": "Gebze", "mahalle": "Güzeller", "ada": "75", "parsel": "91", "gmaps": "https://www.google.com/maps/place/40°49'13.4%22N+29°28'32.2%22E/@40.820404,29.4730251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.8204!4d29.4756?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 15, "is_start": false, "is_return": false, "color": "#1a7fea", "lat": 40.8065, "lon": 29.4016, "varis": "11:58", "cikis": "12:13", "stay_min": 15, "yol_km": "6.4", "esas_no": "2026/131", "ilce": "Gebze", "mahalle": "Mustafapaşa", "ada": "6020", "parsel": "1", "gmaps": "https://www.google.com/maps/place/40°48'23.4%22N+29°24'05.8%22E/@40.806504,29.3990251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.8065!4d29.4016?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 16, "is_start": false, "is_return": false, "color": "#1a81ea", "lat": 40.8357, "lon": 29.3911, "varis": "12:16", "cikis": "12:31", "stay_min": 15, "yol_km": "3.4", "esas_no": "2026/56", "ilce": "Çayırova", "mahalle": "Akse", "ada": "827", "parsel": "2", "gmaps": "https://www.google.com/maps/place/40°50'08.5%22N+29°23'28.0%22E/@40.835704,29.3885251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.8357!4d29.3911?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 17, "is_start": false, "is_return": false, "color": "#1984ea", "lat": 40.8443, "lon": 29.3752, "varis": "12:33", "cikis": "12:48", "stay_min": 15, "yol_km": "1.6", "esas_no": "2026/56", "ilce": "Çayırova", "mahalle": "Şekerpınar2", "ada": "830", "parsel": "8", "gmaps": "https://www.google.com/maps/place/40°50'39.5%22N+29°22'30.7%22E/@40.844304,29.3726251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.8443!4d29.3752?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 18, "is_start": false, "is_return": false, "color": "#1886e9", "lat": 40.8561, "lon": 29.4793, "varis": "12:57", "cikis": "13:12", "stay_min": 15, "yol_km": "8.9", "esas_no": "2026/327", "ilce": "Gebze", "mahalle": "Pelitli", "ada": "152", "parsel": "6", "gmaps": "https://www.google.com/maps/place/40°51'22.0%22N+29°28'45.5%22E/@40.856104,29.4767251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.8561!4d29.4793?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 19, "is_start": false, "is_return": false, "color": "#1888e9", "lat": 40.9503, "lon": 29.4694, "varis": "13:22", "cikis": "13:22", "stay_min": 0, "yol_km": "10.5", "esas_no": "2026/473", "ilce": "Gebze", "mahalle": "Kadıllı", "ada": "110", "parsel": "5", "gmaps": "https://www.google.com/maps/place/40°57'01.1%22N+29°28'09.8%22E/@40.950304,29.4668251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.9503!4d29.4694?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 20, "is_start": false, "is_return": false, "color": "#178ae9", "lat": 40.9506, "lon": 29.4696, "varis": "13:22", "cikis": "13:22", "stay_min": 0, "yol_km": "0.0", "esas_no": "2026/473", "ilce": "Gebze", "mahalle": "Kadıllı", "ada": "110", "parsel": "5", "gmaps": "https://www.google.com/maps/place/40°57'02.2%22N+29°28'10.6%22E/@40.9506013,29.4687486,18z/data=!3m1!4b1!4m4!3m3!8m2!3d40.9506!4d29.4696?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 21, "is_start": false, "is_return": false, "color": "#168ce9", "lat": 40.9502, "lon": 29.47, "varis": "13:22", "cikis": "13:37", "stay_min": 15, "yol_km": "0.1", "esas_no": "2026/473", "ilce": "Gebze", "mahalle": "Kadıllı", "ada": "110", "parsel": "5", "gmaps": "https://www.google.com/maps/place/40°57'00.7%22N+29°28'12.0%22E/@40.950202,29.4687125,18z/data=!4m4!3m3!8m2!3d40.9502!4d29.47?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 22, "is_start": false, "is_return": false, "color": "#158ee9", "lat": 40.8285, "lon": 30.0367, "varis": "14:27", "cikis": "14:42", "stay_min": 15, "yol_km": "49.5", "esas_no": "2026/228", "ilce": "İzmit", "mahalle": "Yassıbağ", "ada": "138", "parsel": "84", "gmaps": "https://www.google.com/maps/place/40°49'42.6%22N+30°02'12.1%22E/@40.828504,30.0341251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.8285!4d30.0367?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 23, "is_start": false, "is_return": false, "color": "#1590e9", "lat": 40.7213, "lon": 29.9954, "varis": "14:54", "cikis": "14:54", "stay_min": 0, "yol_km": "12.4", "esas_no": "2026/242", "ilce": "Başiskele", "mahalle": "Kullar Tepecik", "ada": "950", "parsel": "—", "gmaps": "https://www.google.com/maps/place/40°43'16.7%22N+29°59'43.4%22E/@40.721304,29.9928251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.7213!4d29.9954?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 24, "is_start": false, "is_return": false, "color": "#1492e9", "lat": 40.7191, "lon": 29.9974, "varis": "14:55", "cikis": "14:55", "stay_min": 0, "yol_km": "0.3", "esas_no": "2026/242", "ilce": "Başiskele", "mahalle": "Kullar Tepecik", "ada": "392", "parsel": "18", "gmaps": "https://www.google.com/maps/place/40°43'08.8%22N+29°59'50.6%22E/@40.719104,29.9948251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.7191!4d29.9974?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 25, "is_start": false, "is_return": false, "color": "#1394e9", "lat": 40.7183, "lon": 29.9987, "varis": "14:55", "cikis": "14:55", "stay_min": 0, "yol_km": "0.1", "esas_no": "2026/242", "ilce": "Başiskele", "mahalle": "Kullar Tepecik", "ada": "392", "parsel": "8", "gmaps": "https://www.google.com/maps/place/40°43'05.9%22N+29°59'55.3%22E/@40.718304,29.9961251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.7183!4d29.9987?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 26, "is_start": false, "is_return": false, "color": "#1396e9", "lat": 40.7169, "lon": 29.998, "varis": "14:55", "cikis": "14:55", "stay_min": 0, "yol_km": "0.2", "esas_no": "2026/242", "ilce": "Başiskele", "mahalle": "Doğantepe", "ada": "183", "parsel": "—", "gmaps": "https://www.google.com/maps/place/40°43'00.8%22N+29°59'52.8%22E/@40.716904,29.9954251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.7169!4d29.998?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 27, "is_start": false, "is_return": false, "color": "#1298e9", "lat": 40.7125, "lon": 29.9988, "varis": "14:55", "cikis": "14:55", "stay_min": 0, "yol_km": "0.5", "esas_no": "2026/242", "ilce": "Başiskele", "mahalle": "Doğantepe", "ada": "182", "parsel": "—", "gmaps": "https://www.google.com/maps/place/40°42'45.0%22N+29°59'55.7%22E/@40.711404,29.9968251,17z/data=!4m4!3m3!8m2!3d40.7125!4d29.9988?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 28, "is_start": false, "is_return": false, "color": "#119ae9", "lat": 40.7114, "lon": 29.9994, "varis": "14:55", "cikis": "14:55", "stay_min": 0, "yol_km": "0.1", "esas_no": "2026/242", "ilce": "Başiskele", "mahalle": "Doğantepe", "ada": "181", "parsel": "—", "gmaps": "https://www.google.com/maps/place/40°42'41.0%22N+29°59'57.8%22E/@40.711404,29.9968251,17z/data=!4m4!3m3!8m2!3d40.7114!4d29.9994?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 29, "is_start": false, "is_return": false, "color": "#109ce9", "lat": 40.7093, "lon": 29.9983, "varis": "14:56", "cikis": "15:11", "stay_min": 15, "yol_km": "0.3", "esas_no": "2026/242", "ilce": "Başiskele", "mahalle": "Doğantepe", "ada": "172", "parsel": "—", "gmaps": "https://www.google.com/maps/place/40°42'33.5%22N+29°59'53.9%22E/@40.709304,29.9957251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.7093!4d29.9983?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 30, "is_start": false, "is_return": false, "color": "#109ee9", "lat": 40.6966, "lon": 30.0505, "varis": "15:15", "cikis": "15:30", "stay_min": 15, "yol_km": "4.6", "esas_no": "2026/232", "ilce": "Kartepe", "mahalle": "Çepni", "ada": "163", "parsel": "6", "gmaps": "https://www.google.com/maps/place/40°41'47.8%22N+30°03'01.8%22E/@40.696604,30.0479251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.6966!4d30.0505?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 31, "is_start": false, "is_return": false, "color": "#0fa0e9", "lat": 40.8285, "lon": 30.0367, "varis": "15:45", "cikis": "16:00", "stay_min": 15, "yol_km": "14.7", "esas_no": "2026/228", "ilce": "İzmit", "mahalle": "Yassıbağ", "ada": "138", "parsel": "84", "gmaps": "https://www.google.com/maps/place/40°49'42.6%22N+30°02'12.1%22E/@40.828504,30.0341251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.8285!4d30.0367?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 32, "is_start": false, "is_return": false, "color": "#0ea2e9", "lat": 40.7929, "lon": 29.5387, "varis": "16:42", "cikis": "16:57", "stay_min": 15, "yol_km": "42.1", "esas_no": "", "ilce": "Dilovası", "mahalle": "Çerkeşli", "ada": "126", "parsel": "1", "gmaps": "https://www.google.com/maps/place/40°47'34.4%22N+29°32'19.3%22E/@40.792904,29.5361251,17z/data=!3m1!4b1!4m4!3m3!8m2!3d40.7929!4d29.5387?entry=ttu&g_ep=EgoyMDI2MDYyMi4wIKXMDSoASAFQAw%3D%3D"}, {"step": 33, "is_start": false, "is_return": true, "color": "#1a2b45", "lat": 40.765524, "lon": 29.8748785, "varis": "17:26", "cikis": "", "stay_min": 0, "yol_km": "28.5", "esas_no": "", "ilce": "İzmit", "mahalle": "", "ada": "", "parsel": "", "gmaps": "https://www.google.com/maps/place/Kocaeli+İdare+Mahkemesi/@40.765524,29.8748785,17z"}];
+
+// Kisitli nokta step numaralari (Yassibag=31, Dilovasi=32)
+var CONSTRAINED = {31:true, 32:true};
+
+function mX(lon){return (lon+180)/360;}
+function mY(lat){
+  var s=Math.sin(lat*Math.PI/180);
+  return (1-Math.log((1+s)/(1-s))/(2*Math.PI))/2;
+}
+
+var cv=document.getElementById("cv");
+var ctx=cv.getContext("2d");
+var wrap=document.getElementById("mapwrap");
+var V={cx:0,cy:0,sc:1};
+
+function resize(){cv.width=wrap.clientWidth;cv.height=wrap.clientHeight;draw();}
+window.addEventListener("resize",resize);
+
+var allX=PTS.map(function(p){return mX(p.lon);});
+var allY=PTS.map(function(p){return mY(p.lat);});
+var minX=Math.min.apply(null,allX),maxX=Math.max.apply(null,allX);
+var minY=Math.min.apply(null,allY),maxY=Math.max.apply(null,allY);
+
+function fitAll(){
+  var W=cv.width,H=cv.height,pad=0.07;
+  var rx=(maxX-minX)*(1+pad*2),ry=(maxY-minY)*(1+pad*2);
+  V.sc=Math.min(W/rx,H/ry);
+  V.cx=(minX+maxX)/2;
+  V.cy=(minY+maxY)/2;
+  hidePop();draw();
+}
+
+function toXY(lon,lat){
+  var W=cv.width,H=cv.height;
+  return [W/2+(mX(lon)-V.cx)*V.sc,H/2+(mY(lat)-V.cy)*V.sc];
+}
+
+// Tile sistemi
+var tileCache={};
+var TILES=[
+  "https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}.png",
+  "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png"
+];
+var tIdx=0, tErr=0;
+
+function tUrl(z,x,y){return TILES[tIdx].replace("{z}",z).replace("{x}",x).replace("{y}",y);}
+
+function getTile(z,x,y){
+  var k=z+"/"+x+"/"+y;
+  if(tileCache[k]) return tileCache[k];
+  var img=new Image();
+  img.crossOrigin="anonymous";
+  img.onload=function(){tileCache[k].ok=true;draw();};
+  img.onerror=function(){
+    tileCache[k].err=true; tErr++;
+    if(tErr>4&&tIdx<TILES.length-1){tIdx++;tErr=0;tileCache={};draw();}
+  };
+  img.src=tUrl(z,x,y);
+  tileCache[k]={img:img,ok:false,err:false};
+  return tileCache[k];
+}
+
+function drawTiles(){
+  var W=cv.width,H=cv.height;
+  var zoom=Math.max(6,Math.min(17,Math.round(Math.log2(V.sc*256/256))+8));
+  var n=Math.pow(2,zoom),tpx=256*V.sc/n;
+  var txMin=Math.floor((V.cx-W/(2*V.sc))*n),txMax=Math.ceil((V.cx+W/(2*V.sc))*n);
+  var tyMin=Math.floor((V.cy-H/(2*V.sc))*n),tyMax=Math.ceil((V.cy+H/(2*V.sc))*n);
+  for(var ty=tyMin;ty<=tyMax;ty++){
+    for(var tx=txMin;tx<=txMax;tx++){
+      if(tx<0||ty<0||tx>=n||ty>=n) continue;
+      var t=getTile(zoom,tx,ty);
+      var sx=W/2+(tx/n-V.cx)*V.sc,sy=H/2+(ty/n-V.cy)*V.sc;
+      if(t.ok){ctx.drawImage(t.img,sx,sy,tpx+1,tpx+1);}
+      else if(!t.err){ctx.fillStyle="#e5e7eb";ctx.fillRect(sx,sy,tpx+1,tpx+1);}
+    }
+  }
+}
+
+var showRota=true;
+
+function draw(){
+  var W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle="#dde8f0";ctx.fillRect(0,0,W,H);
+  drawTiles();
+  if(showRota){
+    ctx.beginPath();
+    PTS.forEach(function(p,i){var xy=toXY(p.lon,p.lat);i===0?ctx.moveTo(xy[0],xy[1]):ctx.lineTo(xy[0],xy[1]);});
+    ctx.strokeStyle="rgba(255,255,255,0.85)";ctx.lineWidth=7;ctx.lineJoin="round";ctx.lineCap="round";ctx.setLineDash([]);ctx.stroke();
+    ctx.beginPath();
+    PTS.forEach(function(p,i){var xy=toXY(p.lon,p.lat);i===0?ctx.moveTo(xy[0],xy[1]):ctx.lineTo(xy[0],xy[1]);});
+    ctx.strokeStyle="#f59e0b";ctx.lineWidth=3;ctx.setLineDash([8,5]);ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  PTS.forEach(function(p){
+    var xy=toXY(p.lon,p.lat);
+    var special=p.is_start||p.is_return;
+    var isCon=CONSTRAINED[p.step]||false;
+    var r=special?14:(p.stay_min===15?11:7);
+    ctx.beginPath();ctx.arc(xy[0],xy[1]+2,r+2,0,Math.PI*2);
+    ctx.fillStyle="rgba(0,0,0,0.1)";ctx.fill();
+    ctx.beginPath();ctx.arc(xy[0],xy[1],r+3,0,Math.PI*2);
+    ctx.fillStyle="#fff";ctx.fill();
+    ctx.beginPath();ctx.arc(xy[0],xy[1],r,0,Math.PI*2);
+    ctx.fillStyle=p.color;ctx.fill();
+    // Kisitli nokta: turuncu halka
+    if(isCon){
+      ctx.beginPath();ctx.arc(xy[0],xy[1],r+4,0,Math.PI*2);
+      ctx.strokeStyle="#f59e0b";ctx.lineWidth=2;ctx.stroke();
+    }
+    var lbl=p.is_start?"S":(p.is_return?"R":String(p.step));
+    ctx.fillStyle="#fff";
+    ctx.font="bold "+(special?12:r>=10?9:7)+"px sans-serif";
+    ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.fillText(lbl,xy[0],xy[1]);
+  });
+}
+
+// Pan/Zoom
+var drag=false,ds={x:0,y:0},vs={cx:0,cy:0};
+cv.addEventListener("mousedown",function(e){drag=true;ds={x:e.clientX,y:e.clientY};vs={cx:V.cx,cy:V.cy};});
+window.addEventListener("mousemove",function(e){if(!drag)return;V.cx=vs.cx-(e.clientX-ds.x)/V.sc;V.cy=vs.cy-(e.clientY-ds.y)/V.sc;draw();});
+window.addEventListener("mouseup",function(){drag=false;});
+cv.addEventListener("wheel",function(e){
+  e.preventDefault();
+  var f=e.deltaY<0?1.15:0.87;
+  var r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  var cx0=V.cx+(mx-cv.width/2)/V.sc,cy0=V.cy+(my-cv.height/2)/V.sc;
+  V.sc*=f;V.cx=cx0-(mx-cv.width/2)/V.sc;V.cy=cy0-(my-cv.height/2)/V.sc;draw();
+},{passive:false});
+var tc={};
+cv.addEventListener("touchstart",function(e){
+  e.preventDefault();
+  if(e.touches.length===1){drag=true;ds={x:e.touches[0].clientX,y:e.touches[0].clientY};vs={cx:V.cx,cy:V.cy};}
+  if(e.touches.length===2){drag=false;tc.d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);tc.s=V.sc;}
+},{passive:false});
+cv.addEventListener("touchmove",function(e){
+  e.preventDefault();
+  if(e.touches.length===1&&drag){V.cx=vs.cx-(e.touches[0].clientX-ds.x)/V.sc;V.cy=vs.cy-(e.touches[0].clientY-ds.y)/V.sc;draw();}
+  if(e.touches.length===2){var d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);V.sc=tc.s*(d/tc.d);draw();}
+},{passive:false});
+cv.addEventListener("touchend",function(){drag=false;});
+function doZoom(f){V.sc*=f;draw();}
+
+// Popup
+var activeItem=null;
+cv.addEventListener("click",function(e){
+  if(Math.abs(e.clientX-ds.x)>5||Math.abs(e.clientY-ds.y)>5)return;
+  var r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  var best=null,bestD=999;
+  PTS.forEach(function(p,i){
+    var xy=toXY(p.lon,p.lat);
+    var d=Math.hypot(mx-xy[0],my-xy[1]);
+    var hit=p.is_start||p.is_return?18:p.stay_min===15?15:11;
+    if(d<hit&&d<bestD){bestD=d;best=i;}
+  });
+  if(best!==null)showPop(best,e.clientX-r.left,e.clientY-r.top);
+  else hidePop();
+});
+
+function showPop(i,px,py){
+  var p=PTS[i];
+  var isCon=CONSTRAINED[p.step]||false;
+  var loc=p.is_start||p.is_return?"Kocaeli Idare Mahkemesi":[p.ilce,p.mahalle].filter(Boolean).join(" / ");
+  var badge=p.is_start?"S":(p.is_return?"R":p.step);
+  var sub=p.is_start?"BASLANGIC":(p.is_return?"DONUS":p.step+". Durak"+(p.stay_min===0?" (Grup ici)":"")+(isCon?" - Kisitli":""));
+  var rows="";
+  if(!p.is_start&&!p.is_return){
+    if(p.esas_no) rows+=pr("Esas No",p.esas_no);
+    if(p.ilce)    rows+=pr("Ilce",p.ilce);
+    if(p.mahalle) rows+=pr("Mahalle",p.mahalle);
+    if(p.ada&&p.ada!="nan"&&p.ada!="") rows+=pr("Ada/Parsel",p.ada+(p.parsel&&p.parsel!="-"&&p.parsel!=""?" / "+p.parsel:""));
+    rows+=pr("Varis",p.varis);
+    if(p.cikis) rows+=pr("Cikis",p.cikis);
+    rows+=pr("Bekleme",p.stay_min===0?"Grup ici":p.stay_min+" dk");
+    if(p.yol_km) rows+=pr("Mesafe",p.yol_km+" km");
+  } else {
+    rows+=pr("Adres","Dogan Baris Cd. No:2, Izmit");
+    rows+=pr(p.is_start?"Cikis":"Varis",p.is_start?"09:00":"17:26");
+  }
+  var btn=(p.gmaps&&p.gmaps.length>10)
+    ? '<a class="gb" href="'+p.gmaps+'" target="_blank">Google Maps</a>'
+    : '<a class="gb off">Harita linki yok</a>';
+  document.getElementById("pop-inner").innerHTML=
+    '<div class="ph" style="background:'+p.color+'18;border-bottom:2px solid '+p.color+'44">'+
+    '<div class="pbadge" style="background:'+p.color+'">'+badge+'</div>'+
+    '<div><div class="ptitle">'+xe(loc)+'</div><div class="psub">'+sub+'</div></div></div>'+
+    '<div class="pb">'+rows+'</div><div class="pf">'+btn+'</div>';
+  var pop=document.getElementById("pop");
+  pop.style.display="block";
+  var W=cv.width,pw=275,ph=pop.offsetHeight||200;
+  var left=px+14;if(left+pw>W-8)left=px-pw-14;
+  var top=py-ph/2;if(top<8)top=8;if(top+ph>cv.height-8)top=cv.height-ph-8;
+  pop.style.left=left+"px";pop.style.top=top+"px";
+  if(activeItem)activeItem.classList.remove("on");
+  var li=document.getElementById("ri"+i);
+  if(li){li.classList.add("on");li.scrollIntoView({block:"nearest",behavior:"smooth"});activeItem=li;}
+}
+function hidePop(){document.getElementById("pop").style.display="none";}
+function pr(k,v){return'<div class="pr"><span class="pk">'+k+'</span><span class="pv">'+xe(String(v))+'</span></div>';}
+function xe(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+// Liste
+var listEl=document.getElementById("list");
+PTS.forEach(function(p,i){
+  var isCon=CONSTRAINED[p.step]||false;
+  var loc=p.is_start?"Kocaeli Idare Mahkemesi":(p.is_return?"Kocaeli Idare Mahkemesi (Donus)":[p.ilce,p.mahalle].filter(Boolean).join(" / "));
+  var ap=(!p.is_start&&!p.is_return&&p.ada&&p.ada!=""&&p.ada!="nan")?"Ada:"+p.ada+(p.parsel&&p.parsel!="-"&&p.parsel!=""?" Par:"+p.parsel:""):"";
+  var isGrp=(!p.is_start&&!p.is_return&&p.stay_min===0);
+  var lbl=p.is_start?"S":(p.is_return?"R":p.step);
+  var d=document.createElement("div");
+  var cls="ri"+(isGrp?" grp":"")+(isCon?" constrained":"");
+  d.className=cls; d.id="ri"+i;
+  var meta="";
+  if(p.esas_no) meta+='<span class="chip">'+p.esas_no+'</span>';
+  if(ap) meta+='<span class="chip">'+ap+'</span>';
+  var b2=isCon?'<span class="conb">kisitli</span>':(isGrp?'<span class="grpb">grup ici</span>':(p.yol_km?'<span class="idk">+'+p.yol_km+'km</span>':""));
+  d.innerHTML=
+    '<div class="sc"><div class="sb2" style="background:'+p.color+'">'+lbl+'</div><div class="sl2"></div></div>'+
+    '<div class="ib"><div class="it"><span class="itm">'+p.varis+(p.cikis?" > "+p.cikis:"")+'</span>'+b2+'</div>'+
+    '<div class="il">'+xe(loc)+'</div><div class="im">'+meta+'</div></div>';
+  d.addEventListener("click",function(){
+    V.cx=mX(p.lon);V.cy=mY(p.lat);
+    if(V.sc<600000)V.sc=600000;
+    draw();
+    setTimeout(function(){showPop(i,cv.width/2,cv.height/2);},80);
+  });
+  listEl.appendChild(d);
+});
+
+function togRota(){showRota=!showRota;document.getElementById("br").classList.toggle("on",showRota);draw();}
+function swTab(t,el){
+  document.querySelectorAll(".tab").forEach(function(x){x.classList.remove("on");});
+  el.classList.add("on");
+  document.getElementById("list").style.display=t==="list"?"block":"none";
+  document.getElementById("leg").style.display=t==="leg"?"block":"none";
+}
+
+resize();
+fitAll();
+</script>
+</body>
+</html>
